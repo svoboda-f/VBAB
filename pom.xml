@@ -9,10 +9,10 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>cz.osu</groupId>
-	<artifactId>vbab</artifactId>
+	<artifactId>vbap</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>vbab</name>
-	<description>Demo project for Spring Boot</description>
+	<name>vbap</name>
+	<description>Spring boot backend for 7VBAP course</description>
 	<properties>
 		<java.version>17</java.version>
 	</properties>
