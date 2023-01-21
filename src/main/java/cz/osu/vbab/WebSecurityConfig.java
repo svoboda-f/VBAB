@@ -15,6 +15,7 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 import cz.osu.vbab.service.MyUserDetailsService;
+import cz.osu.vbab.utils.JwtRequestFilter;
 
 @Configuration
 @EnableWebSecurity

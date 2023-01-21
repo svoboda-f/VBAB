@@ -1,61 +1,64 @@
 package cz.osu.vbab.service;
 
 import java.util.List;
-import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import cz.osu.vbab.exception.NotFoundException;
+import cz.osu.vbab.exception.NotOwnerException;
 import cz.osu.vbab.model.Video;
 import cz.osu.vbab.model.rest.VideoPatch;
 import cz.osu.vbab.repository.VideoRepository;
+import cz.osu.vbab.utils.Ownership;
 
 @Service
 public class VideoService {
-    
+
     @Autowired
     private VideoRepository videoRepository;
     @Autowired
     private AuthService authService;
 
-    public List<Video> getAll() {
-        return this.videoRepository.findAll();
+    public List<Video> findAll(int offset, int size) {
+        return this.videoRepository.findAll(PageRequest.of(offset, size)).toList();
     }
 
-    public Video getById(long id) throws Exception {
-        Optional<Video> video = this.videoRepository.findById(id);
+    public List<Video> findAllByTitleContaining(String partialTitle, int offset, int size) {
+        Pageable pageable = PageRequest.of(offset, size);
+        return this.videoRepository.findAllByTitleContaining(partialTitle, pageable);
+    }
 
-        if(video.isEmpty()) {
-            throw new Exception("Video with id " + id + " not found");
-        }
-        video.get().addView();
-        return this.videoRepository.save(video.get());
+    public Video getById(long videoId) throws NotFoundException {
+        Video video = this.videoRepository.findById(videoId)
+                .orElseThrow(() -> new NotFoundException(Video.class, videoId));
+        video.addView();
+        return this.videoRepository.save(video);
     }
 
     public Video newVideo(Video video) {
-        Video ret = new Video(video.getTitle(), video.getDescription(), video.getSourceUrl(), this.authService.getCurrentUser());
-        return this.videoRepository.save(ret);
+        Video newVideo = new Video(video.getTitle(), video.getDescription(), video.getSourceUrl(),
+                this.authService.getCurrentUser());
+        return this.videoRepository.save(newVideo);
     }
 
-    public Video updateVideo(long id, VideoPatch videoPatch) throws Exception{
-        Video video = this.videoRepository.findById(id).orElseThrow(() -> new Exception("Video with id " + id + " not found"));
+    public Video updateVideo(long videoId, VideoPatch videoPatch) throws NotFoundException, NotOwnerException {
+        Video video = this.videoRepository.findById(videoId)
+                .orElseThrow(() -> new NotFoundException(Video.class, videoId));
+        Ownership.check(video, this.authService.getCurrentUserId());
         video.setTitle(videoPatch.title());
         video.setDescription(videoPatch.description());
         return this.videoRepository.save(video);
     }
 
-    public void deleteVideo(long id) throws Exception {
-        Optional<Video> video = this.videoRepository.findById(id);
-
-        if(video.isEmpty()) {
-            throw new Exception("Video with id " + id + " not found");
-        }
-
-        if(video.get().getUser().getId() != this.authService.getCurrentUserId()) {
-            throw new Exception("Video with id " + id + " isn't yours");
-        }
-
-        this.videoRepository.delete(video.get());
+    public void deleteVideo(long videoId) throws NotFoundException, NotOwnerException {
+        Video video = this.videoRepository.findById(videoId)
+                .orElseThrow(() -> new NotFoundException(Video.class, videoId));
+        Ownership.check(video, this.authService.getCurrentUserId());
+        video.getPlaylists().forEach(playlist -> playlist.getVideos().remove(video));
+        this.videoRepository.delete(video);
     }
 
 }

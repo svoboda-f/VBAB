@@ -6,14 +6,21 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
+import cz.osu.vbab.exception.NotFoundException;
+import cz.osu.vbab.exception.NotOwnerException;
 import cz.osu.vbab.model.Playlist;
+import cz.osu.vbab.model.Video;
 import cz.osu.vbab.repository.PlaylistRepository;
+import cz.osu.vbab.repository.VideoRepository;
+import cz.osu.vbab.utils.Ownership;
 
 @Service
 public class PlaylistService {
 
     @Autowired
     private PlaylistRepository playlistRepository;
+    @Autowired
+    private VideoRepository videoRepository;
     @Autowired
     private AuthService authService;
 
@@ -25,43 +32,42 @@ public class PlaylistService {
         return this.playlistRepository.findAllByUserId(userId, PageRequest.of(offset, size));
     }
 
-    public Playlist getPlaylistById(long playlistId) throws Exception {
-        return this.playlistRepository.findById(playlistId).orElseThrow(() -> new Exception());
+    public Playlist getPlaylistById(long playlistId) throws NotFoundException {
+        return this.playlistRepository.findById(playlistId).orElseThrow(() -> new NotFoundException(Playlist.class, playlistId));
     }
 
     public Playlist createPlaylist(Playlist playlist) {
-        return null;
+        Playlist newPlaylist = new Playlist(playlist.getName(), this.authService.getCurrentUser());
+        return this.playlistRepository.save(newPlaylist);
     }
 
-    public Playlist updatePlaylistName(long playlistId, String name) throws Exception {
-        Playlist playlist = this.playlistRepository.findById(playlistId).orElseThrow(() -> new Exception());
-        checkIfOwner(playlist);
+    public Playlist updatePlaylistName(long playlistId, String name) throws NotFoundException, NotOwnerException {
+        Playlist playlist = this.playlistRepository.findById(playlistId).orElseThrow(() -> new NotFoundException(Playlist.class, playlistId));
+        Ownership.check(playlist, this.authService.getCurrentUserId());
         playlist.setName(name);
         return this.playlistRepository.save(playlist);
     }
 
-    public void deletePlaylist(long playlistId) throws Exception {
-        Playlist playlist = this.playlistRepository.findById(playlistId).orElseThrow(() -> new Exception());
-        checkIfOwner(playlist);
+    public void deletePlaylist(long playlistId) throws NotFoundException, NotOwnerException {
+        Playlist playlist = this.playlistRepository.findById(playlistId).orElseThrow(() -> new NotFoundException(Playlist.class, playlistId));
+        Ownership.check(playlist, this.authService.getCurrentUserId());
         this.playlistRepository.delete(playlist);
     }
 
-    public void addVideoToPlaylist(long playlistId, long videoId) throws Exception {
-        Playlist playlist = this.playlistRepository.findById(playlistId).orElseThrow(() -> new Exception());
-        checkIfOwner(playlist);
-        
+    public void addVideoToPlaylist(long playlistId, long videoId) throws NotFoundException, NotOwnerException {
+        Playlist playlist = this.playlistRepository.findById(playlistId).orElseThrow(() -> new NotFoundException(Playlist.class, playlistId));
+        Ownership.check(playlist, this.authService.getCurrentUserId());
+        Video video = this.videoRepository.findById(videoId).orElseThrow(() -> new NotFoundException(Video.class, videoId));
+        playlist.getVideos().add(video);
+        this.playlistRepository.save(playlist);
     }
 
-    public void removeVideofromPlaylist(long playlistId, long videoId) throws Exception {
-        Playlist playlist = this.playlistRepository.findById(playlistId).orElseThrow(() -> new Exception());
-        checkIfOwner(playlist);
-
-    }
-
-    private void checkIfOwner(Playlist playlist) throws Exception {
-        if (playlist.getUser().getId() != this.authService.getCurrentUserId()) {
-            throw new Exception();
-        }
+    public void removeVideofromPlaylist(long playlistId, long videoId) throws NotFoundException, NotOwnerException {
+        Playlist playlist = this.playlistRepository.findById(playlistId).orElseThrow(() -> new NotFoundException(Playlist.class, playlistId));
+        Ownership.check(playlist, this.authService.getCurrentUserId());
+        Video video = this.videoRepository.findById(videoId).orElseThrow(() -> new NotFoundException(Video.class, videoId));
+        playlist.getVideos().remove(video);
+        this.playlistRepository.save(playlist);
     }
 
 }

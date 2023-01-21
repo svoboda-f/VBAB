@@ -1,6 +1,5 @@
 package cz.osu.vbab.service;
 
-import java.util.LinkedHashMap;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,14 +13,13 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import cz.osu.vbab.JwtTokenUtil;
 import cz.osu.vbab.model.AppUserDetails;
 import cz.osu.vbab.model.User;
 import cz.osu.vbab.model.auth.LoginCredentials;
 import cz.osu.vbab.model.auth.RegisterCredentials;
 import cz.osu.vbab.model.dto.TokenDTO;
-import cz.osu.vbab.model.dto.UserDTO;
 import cz.osu.vbab.repository.UserRepository;
+import cz.osu.vbab.utils.JwtTokenUtil;
 
 @Service
 public class AuthService {
@@ -48,17 +46,16 @@ public class AuthService {
         return new TokenDTO(token);
     }
 
-    // TODO change exception to own exception
     public User register(RegisterCredentials register) throws Exception {
-        Optional<User> tmp = this.userRepository.findByUsername(register.username());
+        Optional<User> optionalUser = this.userRepository.findByUsername(register.username());
 
-        if (tmp.isPresent()) {
+        if (optionalUser.isPresent()) {
             throw new Exception("User with name " + register.username() + " already exists");
         }
 
-        tmp = this.userRepository.findByEmail(register.email());
+        optionalUser = this.userRepository.findByEmail(register.email());
 
-        if (tmp.isPresent()) {
+        if (optionalUser.isPresent()) {
             throw new Exception("Email " + register.email() + " already in use");
         }
         User user = new User(register.email(), register.username(), passwordEncoder.encode(register.password()),

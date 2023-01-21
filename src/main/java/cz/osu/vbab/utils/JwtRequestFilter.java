@@ -1,4 +1,4 @@
-package cz.osu.vbab;
+package cz.osu.vbab.utils;
 
 import java.io.IOException;
 

@@ -5,6 +5,7 @@ import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
@@ -23,7 +24,7 @@ public class Video {
     private long id;
     @NotBlank(message = "Title can't be empty")
     private String title;
-    @NotNull
+    @NotNull(message = "Description can't be null")
     private String description;
     private long views;
     @NotBlank(message = "Source url can't be empty")
@@ -34,7 +35,7 @@ public class Video {
     @JoinColumn(name="user", nullable = false)
     private User user;
     @JsonIgnore
-    @OneToMany(mappedBy = "video")
+    @OneToMany(mappedBy = "video", cascade = CascadeType.ALL)
     private List<Comment> comments;
     @JsonIgnore
     @ManyToMany(mappedBy = "videos")

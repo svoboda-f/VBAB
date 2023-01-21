@@ -7,6 +7,7 @@ import java.util.List;
 import org.hibernate.validator.constraints.Length;
 
 import cz.osu.vbab.model.dto.UserDTO;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -33,12 +34,12 @@ public class User {
     @Past(message = "Date of birth has to be in the past")
     private LocalDate dateOfBirth;
 
-    @OneToMany(mappedBy = "user")
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     private List<Video> uploadedVideos;
-    @OneToMany(mappedBy = "user")
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     private List<Playlist> playlists;
 
-    @OneToMany(mappedBy = "user")
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     private List<Comment> comments;
 
     public User() {

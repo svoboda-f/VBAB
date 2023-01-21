@@ -3,6 +3,7 @@ package cz.osu.vbab.service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import cz.osu.vbab.exception.NotFoundException;
 import cz.osu.vbab.model.User;
 import cz.osu.vbab.model.rest.PrivateUserInfo;
 import cz.osu.vbab.model.rest.PublicUserInfo;
@@ -16,8 +17,8 @@ public class UserService {
     @Autowired
     private AuthService authService;
 
-    public PublicUserInfo getInfo(long id) throws Exception {
-        User user = this.userRepository.findById(id).orElseThrow(() -> new Exception());
+    public PublicUserInfo getInfo(long userId) throws NotFoundException {
+        User user = this.userRepository.findById(userId).orElseThrow(() -> new NotFoundException(User.class, userId));
         return new PublicUserInfo(user.getUsername(), user.getUploadedVideos(), user.getPlaylists());
     }
 

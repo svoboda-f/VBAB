@@ -23,8 +23,8 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<Object> login(@RequestBody LoginCredentials login) {
         try {
-            TokenDTO ret = this.authService.login(login);
-            return ResponseEntity.ok(ret);
+            TokenDTO token = this.authService.login(login);
+            return ResponseEntity.ok(token);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());
         }

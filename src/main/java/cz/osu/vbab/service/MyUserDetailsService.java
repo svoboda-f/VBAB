@@ -1,6 +1,5 @@
 package cz.osu.vbab.service;
 
-import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -20,10 +19,9 @@ public class MyUserDetailsService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String username) {
-        Optional<User> user = userRepository.findByUsername(username);
-        if (user.isEmpty())
-            throw new UsernameNotFoundException("User with name " + username + " doesn't exist");
-        UserDetails ret = new AppUserDetails(user.get().getUsername(), user.get().getPassword());
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new UsernameNotFoundException("User with name " + username + " doesn't exist"));
+        UserDetails ret = new AppUserDetails(user.getUsername(), user.getPassword());
         return ret;
     }
 }

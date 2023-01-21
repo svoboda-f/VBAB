@@ -3,6 +3,7 @@ package cz.osu.vbab.controller;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -12,8 +13,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import cz.osu.vbab.exception.NotFoundException;
+import cz.osu.vbab.exception.NotOwnerException;
 import cz.osu.vbab.model.Playlist;
 import cz.osu.vbab.service.PlaylistService;
+import jakarta.validation.Valid;
+
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
@@ -41,29 +46,27 @@ public class PlaylistController {
         try {
             Playlist ret = this.playlistService.getPlaylistById(playlistId);
             return ResponseEntity.ok(ret);
-        } catch (Exception e) {
-            return ResponseEntity.notFound().build();
+        } catch (NotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         }
-        
+
     }
 
     @PostMapping()
-    public ResponseEntity<Object> createPlaylist(@RequestBody Playlist playlist) {
-        try {
-            Playlist ret = this.playlistService.createPlaylist(playlist);
-            return ResponseEntity.ok(ret);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().build();
-        }
+    public ResponseEntity<Object> createPlaylist(@RequestBody @Valid Playlist playlist) {
+        Playlist newPlaylist = this.playlistService.createPlaylist(playlist);
+        return ResponseEntity.ok(newPlaylist);
     }
 
     @PatchMapping("/{playlistId}")
     public ResponseEntity<Object> updatePlaylistInfo(@PathVariable long playlistId, @RequestBody String newName) {
         try {
-            Playlist ret = this.playlistService.updatePlaylistName(playlistId, newName);
-            return ResponseEntity.ok(ret);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().build();
+            Playlist updatedPlaylist = this.playlistService.updatePlaylistName(playlistId, newName);
+            return ResponseEntity.ok(updatedPlaylist);
+        } catch (NotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        } catch (NotOwnerException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
         }
     }
 
@@ -72,8 +75,10 @@ public class PlaylistController {
         try {
             this.playlistService.deletePlaylist(playlistId);
             return ResponseEntity.ok().build();
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().build();
+        } catch (NotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        } catch (NotOwnerException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
         }
     }
 
@@ -82,8 +87,10 @@ public class PlaylistController {
         try {
             this.playlistService.addVideoToPlaylist(playlistId, videoId);
             return ResponseEntity.ok().build();
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().build();
+        } catch (NotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        } catch (NotOwnerException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
         }
     }
 
@@ -92,8 +99,10 @@ public class PlaylistController {
         try {
             this.playlistService.removeVideofromPlaylist(playlistId, videoId);
             return ResponseEntity.ok().build();
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().build();
+        } catch (NotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        } catch (NotOwnerException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
         }
     }
 

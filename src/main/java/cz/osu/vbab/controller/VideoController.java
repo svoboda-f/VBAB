@@ -1,5 +1,7 @@
 package cz.osu.vbab.controller;
 
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -13,6 +15,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import cz.osu.vbab.exception.NotFoundException;
+import cz.osu.vbab.exception.NotOwnerException;
 import cz.osu.vbab.model.Video;
 import cz.osu.vbab.model.rest.VideoPatch;
 import cz.osu.vbab.service.VideoService;
@@ -25,56 +29,57 @@ public class VideoController {
     @Autowired
     private VideoService videoService;
 
-    //? nepřihlášený
-    // @GetMapping("/list")
-    // public ResponseEntity<Object> getPaginated(@RequestParam int offset, @RequestParam int size) {
-        
-    // }
+    @GetMapping("/list")
+    public ResponseEntity<Object> findAll(@RequestParam int offset, @RequestParam int size) {
+        List<Video> videos = this.videoService.findAll(offset, size);
+        return ResponseEntity.ok(videos);
+    }
 
-    //? nepřihlášený
     @GetMapping("/{id}")
-    public ResponseEntity<Object> getByVideoId(@PathVariable long id) {
+    public ResponseEntity<Object> getById(@PathVariable long videoId) {
         try {
-            Video video = this.videoService.getById(id);
+            Video video = this.videoService.getById(videoId);
             return ResponseEntity.ok(video);
-        } catch (Exception e) {
-            return ResponseEntity.notFound().build();
+        } catch (NotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         }
     }
 
-    //? nepřihlášený
-    // @GetMapping()
-    // public ResponseEntity<Object> getVideoContaining(@RequestParam String partialTitle) {
-        
-    // }
+    @GetMapping()
+    public ResponseEntity<Object> findAllByTitleContaining(@RequestParam String partialTitle, @RequestParam int offset,
+            @RequestParam int size) {
+        List<Video> videos = this.videoService.findAllByTitleContaining(partialTitle, offset, size);
+        return ResponseEntity.ok(videos);
+    }
 
-    //! Přihlášený
     @PostMapping()
     public ResponseEntity<Object> newVideo(@RequestBody @Valid Video video) {
         Video ret = this.videoService.newVideo(video);
         return ResponseEntity.ok(ret);
     }
 
-    //! Přihlášený
     @DeleteMapping("/{id}")
-    public ResponseEntity<Object> deleteVideo(@PathVariable long id) {
+    public ResponseEntity<Object> deleteVideo(@PathVariable long videoId) {
         try {
-            this.videoService.deleteVideo(id);
+            this.videoService.deleteVideo(videoId);
             return ResponseEntity.ok().build();
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().build();
+        } catch (NotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        } catch (NotOwnerException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
         }
-        
+
     }
 
-    //! Přihlášený
     @PatchMapping("/{id}")
-    public ResponseEntity<Object> updateVideo(@PathVariable long id, @RequestBody VideoPatch videoPatch) {
+    public ResponseEntity<Object> updateVideo(@PathVariable long videoId, @RequestBody VideoPatch videoPatch) {
         try {
-            Video video = this.videoService.updateVideo(id, videoPatch);
+            Video video = this.videoService.updateVideo(videoId, videoPatch);
             return ResponseEntity.ok(video);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().build();
+        } catch (NotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        } catch (NotOwnerException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
         }
     }
 

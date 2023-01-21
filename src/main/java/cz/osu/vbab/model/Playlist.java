@@ -67,6 +67,7 @@ public class Playlist {
         return videos;
     }
 
-    public void setName(String name2) {
+    public void setName(String name) {
+        this.name = name;
     }
 }
